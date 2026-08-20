@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: demo-backend
+
+  # ============================================
+  # Profile: dev (default) - uses H2 in-memory
+  # Profile: prod - uses MySQL
+  # ============================================
+  profiles:
+    active: dev
+
+  # JPA Settings
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Jackson
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+# Server
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# JWT Configuration
+app:
+  jwt:
+    secret: mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm2024
+    expiration-ms: 86400000  # 24 hours
+    refresh-expiration-ms: 604800000  # 7 days
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.demo.backend: DEBUG
+    org.springframework.security: DEBUG
+
+# Swagger / OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
