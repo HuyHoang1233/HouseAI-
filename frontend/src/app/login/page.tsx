@@ -19,8 +19,12 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(formData);
-      router.push('/dashboard');
+      const authData = await login(formData);
+      if (authData.roles && authData.roles.includes('ROLE_ADMIN')) {
+        router.push('/dashboard');
+      } else {
+        router.push('/');
+      }
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
@@ -31,14 +35,16 @@ export default function LoginPage() {
 
   return (
     <div className={styles.authPage}>
-      <div className={styles.bgGlow} />
-
       <div className={styles.authContainer}>
         <Link href="/" className={styles.backLink}>← Về trang chủ</Link>
-        
-        <div className={`${styles.authCard} card-glass animate-fade-in-up`}>
+
+        <div className={styles.authCard}>
           <div className={styles.authHeader}>
-            <div className={styles.authIcon}>🔐</div>
+            <div className={styles.animatedLogo}>
+              <div className={styles.glowRingOuter}></div>
+              <div className={styles.glowRing}></div>
+              <div className={styles.logoCenter}></div>
+            </div>
             <h1 className={styles.authTitle}>Đăng nhập</h1>
             <p className={styles.authSubtitle}>Chào mừng bạn quay lại</p>
           </div>
@@ -92,12 +98,6 @@ export default function LoginPage() {
                 Đăng ký ngay
               </Link>
             </p>
-          </div>
-
-          <div className={styles.demoCredentials}>
-            <p className={styles.demoTitle}>🧪 Tài khoản demo:</p>
-            <p>Admin: <code>admin</code> / <code>admin123</code></p>
-            <p>User: <code>user</code> / <code>user123</code></p>
           </div>
         </div>
       </div>

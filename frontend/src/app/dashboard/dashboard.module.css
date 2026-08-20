@@ -37,3 +37,12 @@
   .sidebar { display: none; }
   .main { margin-left: 0; }
 }
+
+.tableContainer { background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; margin-top: 24px; border: 1px solid #eee; }
+.table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+.table th { background: #fafafa; padding: 16px; font-weight: 600; color: #666; border-bottom: 1px solid #eaeaea; }
+.table td { padding: 16px; border-bottom: 1px solid #eaeaea; color: #333; }
+.table tr:last-child td { border-bottom: none; }
+.statusBadge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+.statusNew { background: #FFF0E6; color: #E8702A; }
+.statusRead { background: #e8f5e9; color: #2e7d32; }

@@ -8,7 +8,7 @@ interface AuthContextType {
   profile: UserResponse | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (data: LoginRequest) => Promise<void>;
+  login: (data: LoginRequest) => Promise<AuthResponse>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async (data: LoginRequest) => {
+  const login = async (data: LoginRequest): Promise<AuthResponse> => {
     const authData = await authService.login(data);
     setUser({
       userId: authData.userId,
@@ -51,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       fullName: authData.fullName,
       roles: authData.roles,
     });
+    return authData;
   };
 
   const register = async (data: RegisterRequest) => {

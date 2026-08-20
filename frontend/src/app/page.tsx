@@ -3,7 +3,13 @@
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { authService } from '@/lib/auth';
+
 export default function Home() {
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
   const navbarRef = useRef<HTMLElement>(null);
   const contactFormRef = useRef<HTMLFormElement>(null);
 
@@ -64,17 +70,71 @@ export default function Home() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    
     if (!contactFormRef.current) return;
     const btn = contactFormRef.current.querySelector('.btn-submit') as HTMLButtonElement;
-    if (btn) {
+    if (!btn) return;
+
+    // Get form data
+    const nameInput = contactFormRef.current.querySelector('#name') as HTMLInputElement;
+    const phoneInput = contactFormRef.current.querySelector('#phone') as HTMLInputElement;
+    const emailInput = contactFormRef.current.querySelector('#email') as HTMLInputElement;
+    const serviceInput = contactFormRef.current.querySelector('#service') as HTMLSelectElement;
+    const messageInput = contactFormRef.current.querySelector('#message') as HTMLTextAreaElement;
+
+    const payload = {
+      customerName: nameInput?.value || '',
+      phone: phoneInput?.value || '',
+      email: emailInput?.value || '',
+      service: serviceInput?.value || '',
+      message: messageInput?.value || '',
+    };
+
+    // Loading state
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang gửi...';
+    btn.style.background = 'linear-gradient(135deg, #95a5a6, #bdc3c7)';
+
+    try {
+      const token = authService.getToken();
+      const res = await fetch('http://localhost:8080/api/quotes', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.message || 'Gửi yêu cầu thất bại');
+      }
+
+      // Success
       btn.textContent = '✅ Đã gửi thành công!';
       btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
       setTimeout(() => {
         btn.textContent = 'Gửi Yêu Cầu Báo Giá';
         btn.style.background = '';
+        btn.disabled = false;
         contactFormRef.current?.reset();
+      }, 3000);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra';
+      btn.textContent = '❌ ' + errorMessage;
+      btn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+      setTimeout(() => {
+        btn.textContent = 'Gửi Yêu Cầu Báo Giá';
+        btn.style.background = '';
+        btn.disabled = false;
       }, 3000);
     }
   };
@@ -91,11 +151,6 @@ export default function Home() {
       {/* NAVBAR */}
       <nav className="navbar" id="navbar" ref={navbarRef}>
         <div className="logo">
-          <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
-            <rect x="2" y="14" width="28" height="16" rx="3" fill="#E8702A"/>
-            <path d="M8 14V6a4 4 0 018 0v8" stroke="#F4D35E" strokeWidth="2.5" fill="none"/>
-            <circle cx="12" cy="22" r="3" fill="#fff"/>
-          </svg>
           Sơn Nano
         </div>
         <ul className="nav-links">
@@ -106,7 +161,24 @@ export default function Home() {
           <li><a href="#process" onClick={(e) => { e.preventDefault(); scrollToSection('process'); }}>Quy trình</a></li>
           <li><a href="#contact" onClick={(e) => { e.preventDefault(); scrollToSection('contact'); }}>Liên hệ</a></li>
         </ul>
-        <button className="nav-cta" onClick={() => scrollToSection('contact')}>Báo Giá Miễn Phí</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {isAuthenticated ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '15px', fontWeight: '600', color: '#E8702A' }}>
+                Chào, {user?.fullName || user?.username}
+              </span>
+              <button 
+                onClick={() => { authService.logout(); window.location.reload(); }} 
+                style={{ fontSize: '13px', background: 'none', border: 'none', color: '#888', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Đăng xuất
+              </button>
+            </div>
+          ) : (
+            <a href="/login" style={{ fontSize: '15px', fontWeight: '500', color: '#555', textDecoration: 'none' }}>Đăng nhập</a>
+          )}
+          <button className="nav-cta" onClick={() => scrollToSection('contact')}>Báo Giá Miễn Phí</button>
+        </div>
       </nav>
 
       {/* HERO */}
@@ -386,11 +458,6 @@ export default function Home() {
         <div className="footer-grid">
           <div className="footer-brand">
             <div className="logo">
-              <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
-                <rect x="2" y="14" width="28" height="16" rx="3" fill="#E8702A"/>
-                <path d="M8 14V6a4 4 0 018 0v8" stroke="#F4D35E" strokeWidth="2.5" fill="none"/>
-                <circle cx="12" cy="22" r="3" fill="#fff"/>
-              </svg>
               Sơn Nano
             </div>
             <p>Dịch vụ sơn nhà chuyên nghiệp hàng đầu Việt Nam. Uy tín - Chất lượng - Giá tốt. Bảo hành lên đến 5 năm.</p>

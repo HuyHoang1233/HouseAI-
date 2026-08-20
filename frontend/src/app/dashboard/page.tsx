@@ -1,20 +1,42 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { authService } from '@/lib/auth';
 import styles from './dashboard.module.css';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { isAuthenticated, user, logout, isLoading } = useAuth();
 
+  const [quotes, setQuotes] = useState<any[]>([]);
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
+      return;
     }
-  }, [isAuthenticated, isLoading, router]);
+
+    if (isAuthenticated && user?.roles?.includes('ROLE_ADMIN')) {
+      const fetchQuotes = async () => {
+        try {
+          const token = authService.getToken();
+          const res = await fetch('http://localhost:8080/api/admin/quotes', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setQuotes(data.data || []);
+          }
+        } catch (error) {
+          console.error("Failed to fetch quotes", error);
+        }
+      };
+      fetchQuotes();
+    }
+  }, [isAuthenticated, isLoading, router, user]);
 
   if (isLoading || !isAuthenticated) {
     return <div className={styles.loadingPage}><div className={styles.spinner} /><p>Đang tải...</p></div>;
@@ -56,10 +78,44 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
-        <div className={`${styles.welcomeCard} card`}>
-          <h3>🎉 Setup hoàn tất!</h3>
-          <p>Backend: <code>http://localhost:8080/api</code> | Frontend: <code>http://localhost:3000</code></p>
-          <p>Swagger: <code>http://localhost:8080/api/swagger-ui.html</code></p>
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Khách hàng</th>
+                <th>Liên hệ</th>
+                <th>Dịch vụ</th>
+                <th>Mô tả</th>
+                <th>Ngày gửi</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              {quotes.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '30px' }}>Chưa có yêu cầu báo giá nào.</td>
+                </tr>
+              ) : (
+                quotes.map(q => (
+                  <tr key={q.id}>
+                    <td style={{ fontWeight: 600 }}>{q.customerName}</td>
+                    <td>
+                      <div>{q.phone}</div>
+                      <div style={{ fontSize: '12px', color: '#888' }}>{q.email}</div>
+                    </td>
+                    <td>{q.service}</td>
+                    <td style={{ maxWidth: '250px' }}>{q.message}</td>
+                    <td>{new Date(q.createdAt).toLocaleDateString('vi-VN')}</td>
+                    <td>
+                      <span className={`${styles.statusBadge} ${q.status === 'NEW' ? styles.statusNew : styles.statusRead}`}>
+                        {q.status === 'NEW' ? 'Chưa trả lời' : 'Đã đọc'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </main>
     </div>
