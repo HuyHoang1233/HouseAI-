@@ -13,6 +13,11 @@ import java.util.Map;
 @Tag(name = "Health", description = "Health check API")
 public class HealthController {
 
+    @GetMapping("/")
+    public ResponseEntity<String> index() {
+        return ResponseEntity.ok("Backend API is running successfully!");
+    }
+
     @GetMapping("/health")
     @Operation(summary = "Health check endpoint (public)")
     public ResponseEntity<ApiResponse<Map<String, String>>> healthCheck() {
