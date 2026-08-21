@@ -1,7 +1,7 @@
 spring:
-  # H2 In-Memory Database for Development
+  # File-backed H2 database so data survives backend restarts and reloads.
   datasource:
-    url: jdbc:h2:mem:devdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:file:./data/demo-db
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -14,7 +14,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
 
 logging:
   level:

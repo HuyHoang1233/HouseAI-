@@ -1,6 +1,7 @@
 package com.demo.backend.config;
 
 import com.demo.backend.security.JwtAuthenticationFilter;
+import com.demo.backend.security.GoogleOAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final GoogleOAuthProperties googleOAuthProperties;
+    private final GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -41,11 +44,16 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(
+                                googleOAuthProperties.isConfigured()
+                                        ? SessionCreationPolicy.IF_REQUIRED
+                                        : SessionCreationPolicy.STATELESS
+                        )
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/health").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -58,6 +66,15 @@ public class SecurityConfig {
                 // For H2 console frame
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        if (googleOAuthProperties.isConfigured()) {
+            http.oauth2Login(oauth2 -> oauth2
+                    .successHandler(googleOAuth2SuccessHandler)
+                    .failureHandler((request, response, exception) ->
+                            response.sendRedirect(googleOAuthProperties.getFrontendUrl()
+                                    + "/login?oauthError=google_login_failed"))
+            );
+        }
 
         return http.build();
     }

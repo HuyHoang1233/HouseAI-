@@ -38,6 +38,18 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public UserResponse toggleUserStatus(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        
+        // Prevent admin from locking themselves (optional but good practice)
+        // If we want to skip that check, just toggle it:
+        user.setActive(!user.getActive());
+        userRepository.save(user);
+        return mapToResponse(user);
+    }
+
     public UserResponse mapToResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())

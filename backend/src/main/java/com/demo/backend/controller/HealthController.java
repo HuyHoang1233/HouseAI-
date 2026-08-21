@@ -24,8 +24,7 @@ public class HealthController {
         Map<String, String> health = Map.of(
                 "status", "UP",
                 "service", "Demo Backend API",
-                "version", "1.0.0"
-        );
+                "version", "1.0.0");
         return ResponseEntity.ok(ApiResponse.success("Service is running", health));
     }
 }

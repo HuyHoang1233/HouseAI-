@@ -10,6 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (data: LoginRequest) => Promise<AuthResponse>;
   register: (data: RegisterRequest) => Promise<void>;
+  completeOAuthLogin: (accessToken: string, refreshToken: string) => Promise<AuthResponse>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
 }
@@ -24,10 +25,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check for existing auth on mount
     const savedUser = authService.getUser();
-    if (savedUser) {
-      setUser(savedUser);
-    }
-    setIsLoading(false);
+    queueMicrotask(() => {
+      if (savedUser) {
+        setUser(savedUser);
+      }
+      setIsLoading(false);
+    });
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -65,6 +68,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const completeOAuthLogin = useCallback(async (accessToken: string, refreshToken: string) => {
+    const authData = await authService.completeOAuthLogin(accessToken, refreshToken);
+    setUser({
+      userId: authData.userId,
+      username: authData.username,
+      email: authData.email,
+      fullName: authData.fullName,
+      roles: authData.roles,
+    });
+    setProfile({
+      id: authData.userId,
+      username: authData.username,
+      email: authData.email,
+      fullName: authData.fullName,
+      phone: '',
+      avatarUrl: '',
+      active: true,
+      roles: authData.roles,
+      createdAt: '',
+      updatedAt: '',
+    });
+    return authData;
+  }, []);
+
   const logout = () => {
     authService.logout();
     setUser(null);
@@ -80,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         login,
         register,
+        completeOAuthLogin,
         logout,
         refreshProfile,
       }}

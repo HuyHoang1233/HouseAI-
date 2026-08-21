@@ -29,6 +29,21 @@ export default function RegisterPage() {
       return;
     }
 
+    if (formData.password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
+
+    if (!/[A-Z]/.test(formData.password)) {
+      setError('Mật khẩu phải chứa ít nhất một ký tự viết hoa');
+      return;
+    }
+
+    if (!/[0-9]/.test(formData.password)) {
+      setError('Mật khẩu phải chứa ít nhất một chữ số');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -39,7 +54,7 @@ export default function RegisterPage() {
         fullName: formData.fullName,
         phone: formData.phone,
       });
-      router.push('/dashboard');
+      router.push('/');
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || 'Đăng ký thất bại. Vui lòng thử lại.');
@@ -52,16 +67,28 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const getPasswordStrength = (p: string) => {
+    if (!p) return 0;
+    let s = 0;
+    if (p.length >= 6) s++;
+    if (/[A-Z]/.test(p)) s++;
+    if (/[0-9]/.test(p)) s++;
+    return s;
+  };
+  const strength = getPasswordStrength(formData.password);
+
   return (
     <div className={styles.authPage}>
-      <div className={styles.bgGlow} />
-
-      <div className={styles.authContainer}>
+      <div className={styles.authContainer} style={{ maxWidth: '650px' }}>
         <Link href="/" className={styles.backLink}>← Về trang chủ</Link>
 
-        <div className={`${styles.authCard} card-glass animate-fade-in-up`}>
+        <div className={styles.authCard}>
           <div className={styles.authHeader}>
-            <div className={styles.authIcon}>✨</div>
+            <div className={styles.animatedLogo}>
+              <div className={styles.glowRingOuter}></div>
+              <div className={styles.glowRing}></div>
+              <div className={styles.logoCenter}></div>
+            </div>
             <h1 className={styles.authTitle}>Đăng ký</h1>
             <p className={styles.authSubtitle}>Tạo tài khoản mới</p>
           </div>
@@ -85,6 +112,7 @@ export default function RegisterPage() {
                   onChange={(e) => updateField('fullName', e.target.value)}
                 />
               </div>
+
               <div className="form-group">
                 <label htmlFor="phone" className="form-label">Số điện thoại</label>
                 <input
@@ -98,31 +126,33 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="username" className="form-label">Tên đăng nhập *</label>
-              <input
-                id="username"
-                type="text"
-                className="form-input"
-                placeholder="Nhập tên đăng nhập"
-                value={formData.username}
-                onChange={(e) => updateField('username', e.target.value)}
-                required
-                minLength={3}
-              />
-            </div>
+            <div className={styles.formRow}>
+              <div className="form-group">
+                <label htmlFor="username" className="form-label">Tên đăng nhập *</label>
+                <input
+                  id="username"
+                  type="text"
+                  className="form-input"
+                  placeholder="Nhập tên đăng nhập"
+                  value={formData.username}
+                  onChange={(e) => updateField('username', e.target.value)}
+                  required
+                  minLength={3}
+                />
+              </div>
 
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">Email *</label>
-              <input
-                id="email"
-                type="email"
-                className="form-input"
-                placeholder="email@example.com"
-                value={formData.email}
-                onChange={(e) => updateField('email', e.target.value)}
-                required
-              />
+              <div className="form-group">
+                <label htmlFor="email" className="form-label">Email *</label>
+                <input
+                  id="email"
+                  type="email"
+                  className="form-input"
+                  placeholder="email@example.com"
+                  value={formData.email}
+                  onChange={(e) => updateField('email', e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
             <div className={styles.formRow}>
@@ -132,13 +162,29 @@ export default function RegisterPage() {
                   id="password"
                   type="password"
                   className="form-input"
-                  placeholder="Ít nhất 6 ký tự"
+                  placeholder="Nhập mật khẩu"
                   value={formData.password}
                   onChange={(e) => updateField('password', e.target.value)}
                   required
                   minLength={6}
                 />
+                {formData.password && (
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                    {[1, 2, 3].map((level) => (
+                      <div key={level} style={{
+                        flex: 1,
+                        height: '4px',
+                        borderRadius: '2px',
+                        backgroundColor: strength >= level 
+                          ? (strength === 1 ? '#ef4444' : strength === 2 ? '#f59e0b' : '#10b981')
+                          : '#e2e8f0',
+                        transition: 'background-color 0.3s'
+                      }} />
+                    ))}
+                  </div>
+                )}
               </div>
+
               <div className="form-group">
                 <label htmlFor="confirmPassword" className="form-label">Xác nhận mật khẩu *</label>
                 <input

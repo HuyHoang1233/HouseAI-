@@ -62,6 +62,49 @@ export const authService = {
     return response.data;
   },
 
+  async sendOtp(email: string): Promise<string> {
+    const response = await apiClient.post<string>('/auth/forgot-password/send-otp', { email });
+    return response.data;
+  },
+
+  async verifyOtp(email: string, otp: string): Promise<boolean> {
+    const response = await apiClient.post<boolean>('/auth/forgot-password/verify-otp', { email, otp });
+    return response.data;
+  },
+
+  async resetPassword(email: string, otp: string, newPassword: string): Promise<string> {
+    const response = await apiClient.post<string>('/auth/forgot-password/reset', { email, otp, newPassword });
+    return response.data;
+  },
+
+  async completeOAuthLogin(accessToken: string, refreshToken: string): Promise<AuthResponse> {
+    if (typeof window === 'undefined') {
+      throw new Error('Google login can only be completed in the browser.');
+    }
+
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+
+    try {
+      const profile = await this.getProfile();
+      const authData: AuthResponse = {
+        accessToken,
+        refreshToken,
+        tokenType: 'Bearer',
+        userId: profile.id,
+        username: profile.username,
+        email: profile.email,
+        fullName: profile.fullName,
+        roles: profile.roles,
+      };
+      this.saveAuth(authData);
+      return authData;
+    } catch (error) {
+      this.logout();
+      throw error;
+    }
+  },
+
   saveAuth(data: AuthResponse): void {
     if (typeof window !== 'undefined') {
       localStorage.setItem(TOKEN_KEY, data.accessToken);

@@ -35,4 +35,20 @@ public class UserController {
         UserResponse user = userService.getUserById(id);
         return ResponseEntity.ok(ApiResponse.success(user));
     }
+
+    @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get all users (admin only)")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
+        List<UserResponse> users = userService.getAllUsers();
+        return ResponseEntity.ok(ApiResponse.success(users));
+    }
+
+    @PutMapping("/{id}/status")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Toggle user active status (admin only)")
+    public ResponseEntity<ApiResponse<UserResponse>> toggleUserStatus(@PathVariable Long id) {
+        UserResponse user = userService.toggleUserStatus(id);
+        return ResponseEntity.ok(ApiResponse.success("User status updated successfully", user));
+    }
 }

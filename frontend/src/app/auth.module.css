@@ -182,6 +182,56 @@
   color: #999;
 }
 
+.authDivider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 16px;
+  color: #999;
+  font-size: 13px;
+}
+
+.authDivider::before,
+.authDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.googleButton {
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px solid #d9dce1;
+  border-radius: 12px;
+  background: #fff;
+  color: #3c4043;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.googleButton:hover:not(:disabled) {
+  background: #f8faff;
+  box-shadow: 0 2px 8px rgba(60, 64, 67, 0.15);
+}
+
+.googleButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.googleButton svg {
+  width: 20px;
+  height: 20px;
+}
+
 .authLink {
   color: #E8702A;
   text-decoration: none;
