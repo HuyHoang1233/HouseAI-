@@ -22,7 +22,10 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class GoogleOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final AuthService authService;
+    @org.springframework.context.annotation.Lazy
+    @org.springframework.beans.factory.annotation.Autowired
+    private AuthService authService;
+    
     private final GoogleOAuthProperties googleOAuthProperties;
 
     @Override
