@@ -16,6 +16,7 @@ export default function ForgotPasswordPage() {
   // Step 2: OTP
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [countdown, setCountdown] = useState(0);
   
   // Step 3: New Password
   const [newPassword, setNewPassword] = useState('');
@@ -24,6 +25,19 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   const getPasswordStrength = (p: string) => {
     if (!p) return 0;
@@ -45,6 +59,7 @@ export default function ForgotPasswordPage() {
       await authService.sendOtp(email);
       setMessage('Mã OTP đã được gửi đến email của bạn.');
       setStep(2);
+      setCountdown(300);
     } catch (err: unknown) {
       const errorObj = err as { message?: string, status?: number };
       if (errorObj.status === 404) {
@@ -54,6 +69,23 @@ export default function ForgotPasswordPage() {
       } else {
         setError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError('');
+    setMessage('');
+    setIsLoading(true);
+    try {
+      await authService.sendOtp(email);
+      setMessage('Đã gửi lại mã OTP. Vui lòng kiểm tra email của bạn.');
+      setCountdown(300);
+      setOtp(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
+    } catch (err: unknown) {
+      setError('Không thể gửi lại mã OTP. Vui lòng thử lại sau.');
     } finally {
       setIsLoading(false);
     }
@@ -121,6 +153,14 @@ export default function ForgotPasswordPage() {
 
   // Handle OTP input
   const handleOtpChange = (index: number, value: string) => {
+    // Allow pasting the full 6-digit code
+    if (value.length >= 6 && /^\d+$/.test(value)) {
+      const pastedOtp = value.slice(0, 6).split('');
+      setOtp([...pastedOtp, ...Array(6 - pastedOtp.length).fill('')].slice(0, 6));
+      otpRefs.current[5]?.focus();
+      return;
+    }
+
     if (!/^\d*$/.test(value)) return; // Only numbers
     
     const newOtp = [...otp];
@@ -134,6 +174,25 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text');
+    const numbersOnly = pastedData.replace(/\D/g, ''); // Extract only numbers
+    if (numbersOnly.length >= 6) {
+      const pastedOtp = numbersOnly.slice(0, 6).split('');
+      setOtp([...pastedOtp, ...Array(6 - pastedOtp.length).fill('')].slice(0, 6));
+      otpRefs.current[5]?.focus();
+    } else if (numbersOnly.length > 0) {
+      const pastedOtp = numbersOnly.split('');
+      const newOtp = [...otp];
+      for (let i = 0; i < pastedOtp.length && i < 6; i++) {
+        newOtp[i] = pastedOtp[i];
+      }
+      setOtp(newOtp);
+      otpRefs.current[Math.min(pastedOtp.length, 5)]?.focus();
+    }
+  };
+
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0 && otpRefs.current[index - 1]) {
       // Move to previous input on backspace if current is empty
@@ -143,7 +202,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className={styles.authPage}>
-      <div className={styles.authContainer} style={{ maxWidth: step === 3 ? '650px' : '440px' }}>
+      <div className={styles.authContainer} style={{ maxWidth: '440px' }}>
         <Link href="/login" className={styles.backLink}>← Quay lại đăng nhập</Link>
 
         <div className={styles.authCard}>
@@ -213,6 +272,7 @@ export default function ForgotPasswordPage() {
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      onPaste={handleOtpPaste}
                       style={{
                         width: '45px',
                         height: '55px',
@@ -221,11 +281,30 @@ export default function ForgotPasswordPage() {
                         borderRadius: '12px',
                         border: '1px solid #e2e8f0',
                         backgroundColor: '#f8fafc',
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        padding: '0',
+                        color: '#1e293b'
                       }}
                       required
                     />
                   ))}
+                </div>
+                
+                <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                  {countdown > 0 ? (
+                    <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
+                      Gửi lại mã sau <strong>{formatTime(countdown)}</strong>
+                    </p>
+                  ) : (
+                    <button 
+                      type="button" 
+                      onClick={handleResendOtp}
+                      disabled={isLoading}
+                      style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600', margin: 0 }}
+                    >
+                      Gửi lại mã OTP
+                    </button>
+                  )}
                 </div>
               </div>
               <button
@@ -249,48 +328,46 @@ export default function ForgotPasswordPage() {
 
           {step === 3 && (
             <form onSubmit={handleResetPassword} className={styles.authForm}>
-              <div className={styles.formRow}>
-                <div className="form-group">
-                  <label htmlFor="newPassword" className="form-label">Mật khẩu mới *</label>
-                  <input
-                    id="newPassword"
-                    type="password"
-                    className="form-input"
-                    placeholder="Nhập mật khẩu mới"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                  {newPassword && (
-                    <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
-                      {[1, 2, 3].map((level) => (
-                        <div key={level} style={{
-                          flex: 1,
-                          height: '4px',
-                          borderRadius: '2px',
-                          backgroundColor: strength >= level 
-                            ? (strength === 1 ? '#ef4444' : strength === 2 ? '#f59e0b' : '#10b981')
-                            : '#e2e8f0',
-                          transition: 'background-color 0.3s'
-                        }} />
-                      ))}
-                    </div>
-                  )}
-                </div>
+              <div className="form-group">
+                <label htmlFor="newPassword" className="form-label">Mật khẩu mới *</label>
+                <input
+                  id="newPassword"
+                  type="password"
+                  className="form-input"
+                  placeholder="Nhập mật khẩu mới"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
+                {newPassword && (
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                    {[1, 2, 3].map((level) => (
+                      <div key={level} style={{
+                        flex: 1,
+                        height: '4px',
+                        borderRadius: '2px',
+                        backgroundColor: strength >= level 
+                          ? (strength === 1 ? '#ef4444' : strength === 2 ? '#f59e0b' : '#10b981')
+                          : '#e2e8f0',
+                        transition: 'background-color 0.3s'
+                      }} />
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                <div className="form-group">
-                  <label htmlFor="confirmPassword" className="form-label">Xác nhận mật khẩu *</label>
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    className="form-input"
-                    placeholder="Nhập lại mật khẩu"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                </div>
+              <div className="form-group">
+                <label htmlFor="confirmPassword" className="form-label">Xác nhận mật khẩu *</label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  className="form-input"
+                  placeholder="Nhập lại mật khẩu"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
               </div>
 
               <button

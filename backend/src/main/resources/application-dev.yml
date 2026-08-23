@@ -19,3 +19,7 @@ spring:
 logging:
   level:
     com.demo.backend: DEBUG
+
+app:
+  google-oauth:
+    enabled: true

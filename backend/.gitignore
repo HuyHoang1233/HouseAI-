@@ -20,3 +20,6 @@ Thumbs.db
 
 # Local H2 development database
 data/
+
+# Secrets
+application-secret.yml

@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -31,9 +32,11 @@ export default function LoginPage() {
       let displayMsg = error.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
       
       if (displayMsg.toLowerCase().includes('user is disabled') || displayMsg.toLowerCase().includes('account is locked')) {
-        displayMsg = 'Your account has been locked. Please contact the administrator.';
-      } else if (displayMsg.toLowerCase().includes('bad credentials')) {
-        displayMsg = 'Tên đăng nhập hoặc mật khẩu không chính xác.';
+        displayMsg = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.';
+      } else if (displayMsg === 'Failed to fetch' || displayMsg.toLowerCase().includes('network error')) {
+        displayMsg = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại backend.';
+      } else {
+        displayMsg = 'Tài khoản hoặc mật khẩu không hợp lệ...';
       }
       
       setError(displayMsg);
@@ -47,15 +50,24 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
 
     try {
-      const response = await fetch('/api/auth/oauth2/google/status');
-      const payload = await response.json() as { data?: boolean };
+      const response = await fetch('/api/auth/oauth2/google/status', { cache: 'no-store' });
+      const text = await response.text();
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch (e) {
+        throw new Error('Invalid JSON from server: ' + text.substring(0, 50));
+      }
+
       if (!response.ok || !payload.data) {
         throw new Error('Google login is not configured');
       }
 
       window.location.assign('/api/oauth2/authorization/google');
-    } catch {
-      setError('Đăng nhập Google chưa được cấu hình. Vui lòng liên hệ quản trị viên.');
+    } catch (err: unknown) {
+      const e = err as Error;
+      console.error('Google login error:', e);
+      setError('Lỗi kết nối tới hệ thống đăng nhập. Vui lòng thử lại sau.');
       setIsGoogleLoading(false);
     }
   };
@@ -98,15 +110,37 @@ export default function LoginPage() {
 
             <div className="form-group">
               <label htmlFor="password" className="form-label">Mật khẩu</label>
-              <input
-                id="password"
-                type="password"
-                className="form-input"
-                placeholder="Nhập mật khẩu"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-              />
+              <div className={styles.passwordWrapper}>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  className="form-input"
+                  placeholder="Nhập mật khẩu"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                />
+                {formData.password.length > 0 && (
+                  <button 
+                    type="button" 
+                    className={styles.passwordToggle}
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </div>
               <Link href="/forgot-password" className={styles.authLink} style={{ fontSize: '0.85rem', fontWeight: 500, display: 'block', marginTop: '8px', textAlign: 'right' }}>
                 Quên mật khẩu?
               </Link>
