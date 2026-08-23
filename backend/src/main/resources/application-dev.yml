@@ -23,5 +23,3 @@ logging:
 app:
   google-oauth:
     enabled: true
-    client-id: "YOUR_GOOGLE_CLIENT_ID"
-    client-secret: "YOUR_GOOGLE_CLIENT_SECRET"
