@@ -65,7 +65,8 @@ export default function LoginPage() {
       window.location.assign('/api/oauth2/authorization/google');
     } catch (err: unknown) {
       const e = err as Error;
-      setError('Lỗi kết nối Google: ' + e.message);
+      console.error('Google login error:', e);
+      setError('Lỗi kết nối tới hệ thống đăng nhập. Vui lòng thử lại sau.');
       setIsGoogleLoading(false);
     }
   };

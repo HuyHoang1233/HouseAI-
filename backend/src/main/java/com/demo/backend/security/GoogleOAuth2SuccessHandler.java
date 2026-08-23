@@ -2,7 +2,7 @@ package com.demo.backend.security;
 
 import com.demo.backend.config.GoogleOAuthProperties;
 import com.demo.backend.dto.response.AuthResponse;
-import com.demo.backend.service.AuthService;
+import com.demo.backend.service.OAuth2Service;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,9 +22,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class GoogleOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    @org.springframework.context.annotation.Lazy
-    @org.springframework.beans.factory.annotation.Autowired
-    private AuthService authService;
+    private final OAuth2Service authService;
     
     private final GoogleOAuthProperties googleOAuthProperties;
 

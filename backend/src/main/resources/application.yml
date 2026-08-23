@@ -30,7 +30,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: hoangchanelqbvn@gmail.com
-    password: utquplxxlxdxcwjb
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -47,7 +47,7 @@ server:
 # JWT Configuration
 app:
   jwt:
-    secret: mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm2024
+    secret: ${JWT_SECRET:mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm2024}
     expiration-ms: 86400000  # 24 hours
     refresh-expiration-ms: 604800000  # 7 days
 

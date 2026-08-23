@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/context/AuthContext';
 import { authService } from '@/lib/auth';
+import { apiClient } from '@/lib/api';
 import styles from './dashboard.module.css';
 
 const serviceTranslations: Record<string, string> = {
@@ -15,15 +16,17 @@ const serviceTranslations: Record<string, string> = {
   repair: 'Xử Lý Bề Mặt',
   commercial: 'Sơn Công Trình',
   decorative: 'Sơn Trang Trí'
+};
+
 const baseRevenueData = [
-  { name: 'Tháng 1', revenue: 14000, projects: 24, monthNum: 1 },
-  { name: 'Tháng 2', revenue: 23000, projects: 43, monthNum: 2 },
-  { name: 'Tháng 3', revenue: 19000, projects: 31, monthNum: 3 },
-  { name: 'Tháng 4', revenue: 27800, projects: 49, monthNum: 4 },
-  { name: 'Tháng 5', revenue: 18900, projects: 28, monthNum: 5 },
-  { name: 'Tháng 6', revenue: 33900, projects: 68, monthNum: 6 },
-  { name: 'Tháng 7', revenue: 34900, projects: 63, monthNum: 7 },
-  { name: 'Tháng 8', revenue: 45200, projects: 89, monthNum: 8 },
+  { name: 'Tháng 1', projects: 24, monthNum: 1 },
+  { name: 'Tháng 2', projects: 43, monthNum: 2 },
+  { name: 'Tháng 3', projects: 31, monthNum: 3 },
+  { name: 'Tháng 4', projects: 49, monthNum: 4 },
+  { name: 'Tháng 5', projects: 28, monthNum: 5 },
+  { name: 'Tháng 6', projects: 68, monthNum: 6 },
+  { name: 'Tháng 7', projects: 63, monthNum: 7 },
+  { name: 'Tháng 8', projects: 89, monthNum: 8 },
 ];
 
 export default function DashboardPage() {
@@ -35,13 +38,11 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   
   const [chartData, setChartData] = useState(baseRevenueData);
-  const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalProjects, setTotalProjects] = useState(0);
 
   useEffect(() => {
     // Mix historical base data with real database records for the chart and stats
     const newChartData = baseRevenueData.map(d => ({ ...d }));
-    let realRev = 0;
     
     quotes.forEach(q => {
       const date = new Date(q.createdAt);
@@ -52,35 +53,24 @@ export default function DashboardPage() {
         const targetMonth = newChartData.find(x => x.monthNum === m);
         if (targetMonth) {
           targetMonth.projects += 1;
-          targetMonth.revenue += 1500; // Estimate $1.5k per project request
         }
       }
-      realRev += 1500;
     });
     
     setChartData(newChartData);
     
-    const baseRev = baseRevenueData.reduce((acc, curr) => acc + curr.revenue, 0);
     const baseProj = baseRevenueData.reduce((acc, curr) => acc + curr.projects, 0);
     
-    setTotalRevenue(baseRev + realRev);
     setTotalProjects(baseProj + quotes.length);
   }, [quotes]);
 
   const toggleUserStatus = async (userId: number) => {
     try {
       const token = authService.getToken();
-      const res = await fetch(`http://localhost:8080/api/users/${userId}/status`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const updatedUser = await res.json();
-        setUsersList(prev => prev.map(u => u.id === userId ? updatedUser.data : u));
-      } else {
-        alert('Có lỗi xảy ra khi cập nhật trạng thái.');
-      }
+      const data = await apiClient.put<any>(`/users/${userId}/status`, {}, token || undefined);
+      setUsersList(prev => prev.map(u => u.id === userId ? data.data : u));
     } catch (error) {
+      alert('Có lỗi xảy ra khi cập nhật trạng thái.');
       console.error(error);
     }
   };
@@ -88,14 +78,8 @@ export default function DashboardPage() {
   const markQuoteAsRead = async (quoteId: number) => {
     try {
       const token = authService.getToken();
-      const res = await fetch(`http://localhost:8080/api/admin/quotes/${quoteId}/read`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const updatedQuote = await res.json();
-        setQuotes(prev => prev.map(q => q.id === quoteId ? updatedQuote.data : q));
-      }
+      const data = await apiClient.put<any>(`/admin/quotes/${quoteId}/read`, {}, token || undefined);
+      setQuotes(prev => prev.map(q => q.id === quoteId ? data.data : q));
     } catch (error) {
       console.error(error);
     }
@@ -111,21 +95,11 @@ export default function DashboardPage() {
       const fetchData = async () => {
         try {
           const token = authService.getToken();
-          const resQuotes = await fetch('http://localhost:8080/api/admin/quotes', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (resQuotes.ok) {
-            const data = await resQuotes.json();
-            setQuotes(data.data || []);
-          }
+          const quotesData = await apiClient.get<any[]>('/admin/quotes', token || undefined);
+          setQuotes(quotesData.data || []);
 
-          const resUsers = await fetch('http://localhost:8080/api/users', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (resUsers.ok) {
-            const data = await resUsers.json();
-            setUsersList(data.data || []);
-          }
+          const usersData = await apiClient.get<any[]>('/users', token || undefined);
+          setUsersList(usersData.data || []);
         } catch (error) {
           console.error("Failed to fetch data", error);
         }
@@ -173,7 +147,6 @@ export default function DashboardPage() {
             <div className={styles.statsGrid}>
               {[
                 { l: 'Người dùng', v: usersList.length.toString(), i: '👥' }, 
-                { l: 'Doanh thu', v: `$${(totalRevenue / 1000).toFixed(1)}K`, i: '💰' }, 
                 { l: 'Dự án (Yêu cầu)', v: totalProjects.toString(), i: '📋' }, 
                 { l: 'Yêu cầu mới', v: quotes.filter(q => q.status === 'NEW').length.toString(), i: '🟢' }
               ].map(s => (
@@ -186,7 +159,7 @@ export default function DashboardPage() {
             
             <div style={{ marginTop: '30px', background: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
               <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>Thống Kê Doanh Thu & Dự Án (Năm 2026)</h2>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>Thống Kê Yêu Cầu Dự Án (Năm 2026)</h2>
                 <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '4px' }}>Biểu đồ thống kê tăng trưởng trong 8 tháng qua</p>
               </div>
               <div style={{ height: '350px', width: '100%' }}>
@@ -202,14 +175,12 @@ export default function DashboardPage() {
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 13 }} dy={10} />
-                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 13 }} dx={-10} tickFormatter={(value) => `$${value/1000}k`} />
-                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 13 }} dx={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 13 }} dx={-10} />
                     <Tooltip 
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                      formatter={(value, name) => [name === 'revenue' ? `$${value}` : value, name === 'revenue' ? 'Doanh thu' : 'Dự án']}
+                      formatter={(value, name) => [value, name === 'projects' ? 'Dự án' : value]}
                     />
-                    <Area yAxisId="left" type="monotone" dataKey="revenue" name="revenue" stroke="#e8702a" fill="#e8702a" fillOpacity={0.15} strokeWidth={3} activeDot={{ r: 6, fill: '#e8702a' }} />
-                    <Area yAxisId="right" type="monotone" dataKey="projects" name="projects" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} activeDot={{ r: 5, fill: '#3b82f6' }} />
+                    <Area type="monotone" dataKey="projects" name="projects" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.15} strokeWidth={3} activeDot={{ r: 6, fill: '#3b82f6' }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
