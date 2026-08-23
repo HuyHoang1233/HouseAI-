@@ -159,6 +159,34 @@
   gap: 20px;
 }
 
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  transition: color 0.2s;
+}
+
+.passwordToggle:hover {
+  color: #4b5563;
+}
+
+.passwordWrapper input {
+  padding-right: 40px;
+}
+
 .formRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
