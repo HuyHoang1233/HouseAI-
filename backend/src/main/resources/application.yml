@@ -2,6 +2,9 @@ spring:
   application:
     name: demo-backend
 
+  config:
+    import: optional:file:./application-secret.yml
+
   # ============================================
   # Profile: dev (default) - uses H2 in-memory
   # Profile: prod - uses MySQL
@@ -30,7 +33,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: hoangchanelqbvn@gmail.com
-    password: ttjx vxzq hvtw kbrc
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -47,7 +50,7 @@ server:
 # JWT Configuration
 app:
   jwt:
-    secret: mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm2024
+    secret: ${JWT_SECRET:mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm2024}
     expiration-ms: 86400000  # 24 hours
     refresh-expiration-ms: 604800000  # 7 days
 

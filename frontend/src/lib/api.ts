@@ -43,13 +43,26 @@ class ApiClient {
       },
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      // If it's not JSON but not OK, we still want to throw an API error
+      if (!response.ok) {
+        throw {
+          status: response.status,
+          message: 'Lỗi hệ thống hoặc phản hồi không hợp lệ',
+          data: null,
+        };
+      }
+      throw e;
+    }
 
     if (!response.ok) {
       throw {
         status: response.status,
-        message: data.message || 'An error occurred',
-        data: data.data,
+        message: data?.message || 'Đã có lỗi xảy ra',
+        data: data?.data,
       };
     }
 
