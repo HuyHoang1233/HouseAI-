@@ -1,7 +1,7 @@
 spring:
   # File-backed H2 database so data survives backend restarts and reloads.
   datasource:
-    url: jdbc:h2:file:./data/demo-db
+    url: jdbc:h2:file:./data/demo-db;AUTO_SERVER=TRUE
     username: sa
     password:
     driver-class-name: org.h2.Driver

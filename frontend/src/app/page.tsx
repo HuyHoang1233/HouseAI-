@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/lib/auth';
+import CanvasPainter from '@/components/CanvasPainter';
 
 export default function Home() {
   const { isAuthenticated, user } = useAuth();
@@ -183,6 +184,31 @@ export default function Home() {
 
       {/* HERO */}
       <section className="hero" id="hero">
+        {/* Animated floating blob #3 */}
+        <div style={{
+          position: 'absolute', width: '400px', height: '400px',
+          top: '50%', left: '50%',
+          background: 'radial-gradient(circle, rgba(232,112,42,0.07), transparent 70%)',
+          borderRadius: '50%', filter: 'blur(60px)',
+          animation: 'floatBlob3 20s ease-in-out infinite', zIndex: 0,
+        }} />
+        {/* Floating decorative particles */}
+        {[...Array(6)].map((_, i) => (
+          <div key={i} style={{
+            position: 'absolute',
+            width: `${8 + i * 4}px`,
+            height: `${8 + i * 4}px`,
+            borderRadius: '50%',
+            background: i % 2 === 0
+              ? 'rgba(232, 112, 42, 0.15)'
+              : 'rgba(99, 102, 241, 0.12)',
+            top: `${15 + i * 13}%`,
+            left: `${10 + i * 15}%`,
+            animation: `floatParticle ${6 + i * 2}s ease-in-out infinite`,
+            animationDelay: `${i * 0.8}s`,
+            zIndex: 0,
+          }} />
+        ))}
         <div className="hero-content">
           <div className="hero-badge"><span className="dot"></span> #1 Dịch Vụ Sơn Nhà Tại Việt Nam</div>
           <h1>Biến Ngôi Nhà Bạn Thành <span>Tác Phẩm Nghệ Thuật</span></h1>
@@ -198,7 +224,9 @@ export default function Home() {
           </div>
         </div>
         <div className="hero-image">
-          <img src="/images/hero-painting.png" alt="Dịch vụ sơn nhà chuyên nghiệp" />
+          <div className="live-paint-demo">
+            <CanvasPainter />
+          </div>
         </div>
       </section>
 
@@ -252,42 +280,42 @@ export default function Home() {
         </div>
         <div className="portfolio-grid">
           <div className="portfolio-item reveal">
-            <img src="/images/hero-painting.png" alt="Sơn phòng khách" />
+            <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80" alt="Sơn phòng khách" />
             <div className="portfolio-overlay">
               <h4>Biệt Thự Phú Mỹ Hưng</h4>
               <p>Sơn nội thất toàn bộ • 2024</p>
             </div>
           </div>
           <div className="portfolio-item reveal">
-            <img src="/images/exterior-painting.png" alt="Sơn ngoại thất" />
+            <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80" alt="Sơn ngoại thất" />
             <div className="portfolio-overlay">
               <h4>Nhà Phố Quận 7</h4>
               <p>Sơn ngoại thất • 2024</p>
             </div>
           </div>
           <div className="portfolio-item reveal">
-            <img src="/images/interior-bedroom.png" alt="Sơn phòng ngủ" />
+            <img src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=600&q=80" alt="Sơn phòng ngủ" />
             <div className="portfolio-overlay">
               <h4>Căn Hộ Vinhomes</h4>
               <p>Sơn phòng ngủ • 2024</p>
             </div>
           </div>
           <div className="portfolio-item reveal">
-            <img src="/images/before-after.png" alt="Trước và sau" />
+            <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" alt="Trước và sau" />
             <div className="portfolio-overlay">
               <h4>Cải Tạo Nhà Cũ</h4>
               <p>Sơn lại toàn bộ • 2023</p>
             </div>
           </div>
           <div className="portfolio-item reveal">
-            <img src="/images/color-consultation.png" alt="Tư vấn màu sơn" />
+            <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80" alt="Tư vấn màu sơn" />
             <div className="portfolio-overlay">
               <h4>Tư Vấn & Phối Màu</h4>
               <p>Dịch vụ tư vấn • 2024</p>
             </div>
           </div>
           <div className="portfolio-item reveal">
-            <img src="/images/team-painters.png" alt="Đội ngũ thi công" />
+            <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80" alt="Đội ngũ thi công" />
             <div className="portfolio-overlay">
               <h4>Đội Ngũ Chuyên Nghiệp</h4>
               <p>50+ thợ sơn lành nghề</p>
@@ -300,7 +328,7 @@ export default function Home() {
       <section id="why-us">
         <div className="why-us reveal">
           <div className="why-us-image">
-            <img src="/images/team-painters.png" alt="Đội ngũ Sơn Nano" />
+            <img src="https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=700&q=80" alt="Đội ngũ Sơn Nano" />
           </div>
           <div className="why-us-content">
             <span className="section-tag">Tại Sao Chọn Chúng Tôi</span>

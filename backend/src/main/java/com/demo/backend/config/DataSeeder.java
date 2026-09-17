@@ -21,30 +21,42 @@ public class DataSeeder {
     @Bean
     CommandLineRunner seedData(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            if (userRepository.count() == 0) {
+            if (!userRepository.existsByUsername("admin")) {
                 User admin = User.builder()
                         .username("admin")
                         .email("admin@demo.com")
                         .password(passwordEncoder.encode("admin123"))
                         .fullName("System Administrator")
+                        .active(true)
                         .roles(Set.of(User.Role.ROLE_ADMIN, User.Role.ROLE_USER))
                         .build();
+                userRepository.save(admin);
+                log.info("Created admin user: admin / admin123");
+            } else {
+                User admin = userRepository.findByUsername("admin").get();
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin.setActive(true);
+                userRepository.save(admin);
+                log.info("Reset admin password to: admin123");
+            }
 
+            if (!userRepository.existsByUsername("user")) {
                 User user = User.builder()
                         .username("user")
                         .email("user@demo.com")
                         .password(passwordEncoder.encode("user123"))
                         .fullName("Demo User")
+                        .active(true)
                         .roles(Set.of(User.Role.ROLE_USER))
                         .build();
-
-                userRepository.save(admin);
                 userRepository.save(user);
-
-                log.info("=== Seeded default users ===");
-                log.info("Admin: admin / admin123");
-                log.info("User:  user / user123");
-                log.info("============================");
+                log.info("Created regular user: user / user123");
+            } else {
+                User user = userRepository.findByUsername("user").get();
+                user.setPassword(passwordEncoder.encode("user123"));
+                user.setActive(true);
+                userRepository.save(user);
+                log.info("Reset regular user password to: user123");
             }
         };
     }

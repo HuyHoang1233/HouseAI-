@@ -79,7 +79,8 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "username", request.getUsername()));
+                .or(() -> userRepository.findByEmail(request.getUsername()))
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username/email", request.getUsername()));
 
         log.info("User logged in: {}", user.getUsername());
         return buildAuthResponse(authentication, user);
