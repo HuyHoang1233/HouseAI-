@@ -152,7 +152,7 @@ const serviceTranslations: Record<string, string> = {
   decorative: 'Sơn Trang Trí',
 };
 
-const REFRESH_INTERVAL = 3000;
+const REFRESH_INTERVAL = 30000;
 
 /* ============================================================
    HELPERS

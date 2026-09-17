@@ -33,11 +33,7 @@ public class DataSeeder {
                 userRepository.save(admin);
                 log.info("Created admin user: admin / admin123");
             } else {
-                User admin = userRepository.findByUsername("admin").get();
-                admin.setPassword(passwordEncoder.encode("admin123"));
-                admin.setActive(true);
-                userRepository.save(admin);
-                log.info("Reset admin password to: admin123");
+                log.info("Admin user already exists, skipping seed.");
             }
 
             if (!userRepository.existsByUsername("user")) {
@@ -52,11 +48,7 @@ public class DataSeeder {
                 userRepository.save(user);
                 log.info("Created regular user: user / user123");
             } else {
-                User user = userRepository.findByUsername("user").get();
-                user.setPassword(passwordEncoder.encode("user123"));
-                user.setActive(true);
-                userRepository.save(user);
-                log.info("Reset regular user password to: user123");
+                log.info("Regular user already exists, skipping seed.");
             }
         };
     }
